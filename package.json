@@ -1,0 +1,57 @@
+{
+  "name": "payagent",
+  "version": "1.0.0",
+  "description": "Verified AI Agent Payments — Lisbon ↔ USA Corridor | Cleanverse Build 2026",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "test": "jest --coverage",
+    "test:endpoints": "bash scripts/test-endpoints.sh",
+    "lint": "eslint . --ext .js",
+    "compile": "npx hardhat compile",
+    "deploy:monad-testnet": "npx hardhat run scripts/deploy.js --network monadTestnet",
+    "deploy:monad-mainnet": "npx hardhat run scripts/deploy.js --network monad"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.10.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "eslint": "^8.54.0",
+    "hardhat": "^2.19.4",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "cleanverse",
+    "compliance",
+    "payments",
+    "monad",
+    "blockchain",
+    "ai-agent",
+    "travel-rule",
+    "kyc",
+    "aml"
+  ],
+  "author": "NormaNova",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/softcopyacq/PayAgent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/softcopyacq/PayAgent/issues"
+  },
+  "homepage": "https://github.com/softcopyacq/PayAgent#readme"
+}
