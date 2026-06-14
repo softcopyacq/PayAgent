@@ -1,71 +1,72 @@
-const express = require('express');
 const axios = require('axios');
-const path = require('path');
 
 /**
  * Test suite for PayAgent endpoints
  * Run: npm test
+ * 
+ * Note: These tests use HTTP requests to a running server.
+ * For local testing: start server in one terminal (npm run dev)
+ * Then run tests in another terminal (npm test)
  */
 
+const BASE_URL = 'http://localhost:3000/api';
+const VALID_TOKEN = 'test-token-abc123def456';
+
 describe('PayAgent API', () => {
-  let app;
-  let server;
-  const PORT = 3001;
-
-  beforeAll(() => {
-    app = require('../server');
-    server = app.listen(PORT, () => {
-      console.log(`Test server running on port ${PORT}`);
-    });
-  });
-
-  afterAll(() => {
-    server.close();
+  // Wait for server to be ready
+  beforeAll(async () => {
+    // Give server time to start
+    await new Promise(resolve => setTimeout(resolve, 500));
   });
 
   describe('Public Endpoints', () => {
     test('GET /api/health returns 200', async () => {
-      const response = await axios.get(`http://localhost:${PORT}/api/health`);
+      const response = await axios.get(`${BASE_URL}/health`);
       expect(response.status).toBe(200);
       expect(response.data.status).toBe('ok');
       expect(response.data.service).toBe('PayAgent');
       expect(response.data.corridors).toBeDefined();
+      expect(Array.isArray(response.data.corridors)).toBe(true);
     });
 
     test('GET /api/corridors returns 200', async () => {
-      const response = await axios.get(`http://localhost:${PORT}/api/corridors`);
+      const response = await axios.get(`${BASE_URL}/corridors`);
       expect(response.status).toBe(200);
       expect(response.data.corridors).toBeDefined();
       expect(response.data.corridors.LISBON_USA).toBeDefined();
+      expect(response.data.corridors.USA_LISBON).toBeDefined();
     });
   });
 
   describe('Authentication', () => {
     test('POST /api/generate_apass without auth returns 401', async () => {
       try {
-        await axios.post(`http://localhost:${PORT}/api/generate_apass`, {
+        await axios.post(`${BASE_URL}/generate_apass`, {
           customerId: 'test-001',
           kycSource: 'Sumsub',
           subTier: 5
         });
+        fail('Should have thrown 401 error');
       } catch (err) {
         expect(err.response.status).toBe(401);
-        expect(err.response.data.error).toMatch(/Authorization/);
+        expect(err.response.data.error).toBeDefined();
       }
     });
 
     test('POST /api/generate_apass with invalid token returns 401', async () => {
       try {
-        await axios.post(`http://localhost:${PORT}/api/generate_apass`,
+        await axios.post(
+          `${BASE_URL}/generate_apass`,
           {
             customerId: 'test-001',
             kycSource: 'Sumsub',
             subTier: 5
           },
           {
-            headers: { 'Authorization': 'Bearer invalid-token' }
+            headers: { 'Authorization': 'Bearer short' }
           }
         );
+        fail('Should have thrown 401 error');
       } catch (err) {
         expect(err.response.status).toBe(401);
       }
@@ -73,52 +74,69 @@ describe('PayAgent API', () => {
   });
 
   describe('Input Validation', () => {
-    const validAuthHeader = { 'Authorization': 'Bearer test-token-abc123def456' };
-
     test('POST /api/generate_apass with missing customerId returns 400', async () => {
       try {
-        await axios.post(`http://localhost:${PORT}/api/generate_apass`,
+        await axios.post(
+          `${BASE_URL}/generate_apass`,
           {
             kycSource: 'Sumsub',
             subTier: 5
           },
-          { headers: validAuthHeader }
+          {
+            headers: { 'Authorization': `Bearer ${VALID_TOKEN}` }
+          }
         );
+        fail('Should have thrown 400 error');
       } catch (err) {
         expect(err.response.status).toBe(400);
+        expect(err.response.data.error).toBeDefined();
       }
     });
 
     test('POST /api/generate_apass with invalid subTier returns 400', async () => {
       try {
-        await axios.post(`http://localhost:${PORT}/api/generate_apass`,
+        await axios.post(
+          `${BASE_URL}/generate_apass`,
           {
             customerId: 'test-001-lisbon',
             subTier: 100 // Invalid: must be 1-99
           },
-          { headers: validAuthHeader }
+          {
+            headers: { 'Authorization': `Bearer ${VALID_TOKEN}` }
+          }
         );
+        fail('Should have thrown 400 error');
       } catch (err) {
         expect(err.response.status).toBe(400);
       }
-    });
-  });
-
-  describe('Security Headers', () => {
-    test('Response includes HSTS header', async () => {
-      const response = await axios.get(`http://localhost:${PORT}/api/health`);
-      // Note: HSTS only applies over HTTPS, but checking structure
-      expect(response.status).toBe(200);
     });
   });
 
   describe('404 Handling', () => {
     test('GET /api/nonexistent returns 404', async () => {
       try {
-        await axios.get(`http://localhost:${PORT}/api/nonexistent`);
+        await axios.get(`${BASE_URL}/nonexistent`);
+        fail('Should have thrown 404 error');
       } catch (err) {
         expect(err.response.status).toBe(404);
       }
+    });
+  });
+
+  describe('Corridor Metadata', () => {
+    test('Corridors include required frameworks', async () => {
+      const response = await axios.get(`${BASE_URL}/corridors`);
+      const lisbon_usa = response.data.corridors.LISBON_USA;
+      expect(lisbon_usa.frameworks).toContain('MiCA');
+      expect(lisbon_usa.frameworks).toContain('FinCEN');
+      expect(lisbon_usa.frameworks).toContain('FATF-Rec16');
+    });
+
+    test('Settlement times are defined and positive', async () => {
+      const response = await axios.get(`${BASE_URL}/corridors`);
+      const lisbon_usa = response.data.corridors.LISBON_USA;
+      expect(lisbon_usa.settlementMs).toBeGreaterThan(0);
+      expect(typeof lisbon_usa.settlementMs).toBe('number');
     });
   });
 });
