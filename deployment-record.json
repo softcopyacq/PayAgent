@@ -1,0 +1,11 @@
+{
+  "network": "monadTestnet",
+  "chainId": "10143",
+  "address": "0x8f59f723A0FdfC753B4a7B0a37db1B9E4319a47e",
+  "txHash": "0x66f4b3911906b41f94c2c27f39a6e5eee5ca0da0d67a30558d1ad2a8522082e6",
+  "deployer": "0x0237577fF6647D519C54b0029C33d981D0b975EB",
+  "oracle": "0x0000000000000000000000000000000000000000",
+  "deployedAt": "2026-06-15T01:21:28.093Z",
+  "hackathon": "Cleanverse Build 2026 — Track 02",
+  "team": "NormaNova"
+}
